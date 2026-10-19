@@ -110,7 +110,7 @@ Deno.serve(async (request: Request) => {
 
   const { data: registrations, error: tokenError } = await db
     .from('g_device_tokens')
-    .select('fcm_token')
+    .select('fcm_target')
     .eq('owner_id', notification.owner_id)
     .order('last_seen_at', { ascending: false })
     .limit(10);
@@ -145,7 +145,7 @@ Deno.serve(async (request: Request) => {
   for (const row of registrations) {
     try {
       const message = {
-        token: row.fcm_token,
+        token: row.fcm_target,
         notification: {
           title: 'Mail Demo • Test notification',
           body: String(notification.body).slice(0, 130),
