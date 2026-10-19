@@ -6,7 +6,7 @@ This setup delivers **clearly labeled demo notifications** to Android devices fo
 
 ```text
 Signed-in Android app (Flutter)
-  -> Firebase Messaging token (per device)
+  -> Firebase installation identifier (FID, per device)
   -> Dwellio Supabase: public.g_device_tokens (owner_id => public.profiles.id)
 
 An authenticated demonstration action
@@ -77,13 +77,13 @@ The following source files are already prepared, not yet activated:
 We will add `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` to `main.dart` using the generated options. Then the signed-in app will:
 
 1. Ask Android 13+ for notification permission using `requestPermission`.
-2. Call `getToken()` and save the token to `g_device_tokens`, owned by `auth.uid()`.
-3. Update the database on `onTokenRefresh`.
+2. Subscribe to `onRegistered`, call `register()`, and save the resulting Firebase Installation ID (FID) to `g_device_tokens.fcm_target`, owned by `auth.uid()`.
+3. Update the database whenever `onRegistered` emits a new FID. In `firebase_messaging` 17+, `getToken` and `onTokenRefresh` are deprecated.
 4. Listen to `FirebaseMessaging.onMessage` (foreground), `onMessageOpenedApp` (background notification tap), and `getInitialMessage()` (cold-start tap).
 5. Use push payload `data.message_id` to retrieve the existing `g_messages` message via ownership-controlled Supabase queries before navigating to `EmailDetailsScreen`. If signed out, open login first.
-6. Delete the registered token on sign-out while the Supabase session still exists.
+6. Delete the registered FID from Supabase on sign-out while the session still exists, then call `unregister()`.
 
-**Do not register FCM tokens for guest/demo mode:** `g_device_tokens.owner_id` must be the real authenticated user. Never store FCM device tokens in `public.profiles` because that table is shared with Dwellio and tokens are per-device.
+**Do not register Firebase Installation ID (FID)s for guest/demo mode:** `g_device_tokens.owner_id` must be the real authenticated user. Never store FCM installation IDs in `public.profiles` because that table is shared with Dwellio and FCM identifiers are per-device.
 
 ## Step 4 — Put the server credentials in Supabase Edge Function Secrets
 
