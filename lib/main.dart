@@ -9,6 +9,7 @@ import 'features/inbox/presentation/screens/inbox_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppConfig.load();
   if (AppConfig.hasSupabase) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
