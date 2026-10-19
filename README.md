@@ -71,6 +71,10 @@ flutter test
 
 The project was edited remotely through GitHub; the authoring environment did not have the Flutter SDK installed, so run these commands locally and report compiler failures for fixes. `flutter pub get` will update `pubspec.lock`; commit that updated lockfile.
 
+## Android system push notifications
+
+The FCM server/client scaffolding and the Supabase `g_device_tokens` table are prepared, but **real Android push is not active until Firebase is configured**. Follow [docs/PUSH_NOTIFICATIONS.md](docs/PUSH_NOTIFICATIONS.md) to register your Android app in Firebase, run `flutterfire configure`, configure the server-only Firebase service-account secret and Supabase webhook, then wire in lifecycle handling.
+
 ## Next milestones
 
 Compare Android emulator screenshots against the supplied Stitch HTML for exact padding, typography, icons, and colors. When ready, implement opt-in Firebase Cloud Messaging for **demo-branded** notifications, add device-token registration, and open the relevant test message on notification tap.
