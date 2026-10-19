@@ -11,36 +11,43 @@ An **independent, clearly identified demonstration** of an Android mail-reading 
 - Feature-first pragmatic Clean Architecture: domain models and repository contracts, data repositories, Riverpod `AsyncValue` providers, presentation widgets
 - Guest mode without Supabase configuration for UI development
 
-## First run
+## First run — root .env
 
-```sh
-flutter pub get
-flutter run
-```
+Configuration now comes from a root `.env` file, loaded by `flutter_dotenv` when the app starts. **No `--dart-define` is needed.**
 
-Press **Explore without signing in** to inspect the UI without a Supabase connection.
+1. Switch to this branch and create your local env file from the checked-in template:
 
-## Connected Supabase authentication
+   **PowerShell (Windows):**
 
-This app uses the existing project URL `https://tspywzqhbrmuwimkvnae.supabase.co` and requires its **publishable** (client-safe) API key at build time. Retrieve the key from Supabase Dashboard → Project Settings → API Keys → publishable key.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-```sh
-flutter run --dart-define=SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-```
+   **macOS / Linux / Git Bash:**
 
-You can also create an untracked local file `config.local.json`:
+   ```sh
+   cp .env.example .env
+   ```
 
-```json
-{"SUPABASE_PUBLISHABLE_KEY":"YOUR_PUBLISHABLE_KEY"}
-```
+2. Open **`.env`** (beside `pubspec.yaml`) and add your Dwellio Supabase **publishable** key:
 
-Then run:
+   ```dotenv
+   SUPABASE_URL=https://tspywzqhbrmuwimkvnae.supabase.co
+   SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_ACTUAL_KEY
+   ```
 
-```sh
-flutter run --dart-define-from-file=config.local.json
-```
+   Get the actual key at Supabase Dashboard → Dwellio → Project Settings → API Keys. Do not copy the literal placeholder above.
 
-Do not commit any service-role or secret API keys. The publishable key does not bypass RLS.
+3. Run normally:
+
+   ```sh
+   flutter pub get
+   flutter run
+   ```
+
+If the publishable key is left blank, you can still open the app using **Explore without signing in**, but live Supabase authentication will remain disabled.
+
+The `.env` file is gitignored. `.env.example` is safe to commit because it contains no keys. Since Flutter bundles env assets into APKs, **never put service_role, sb_secret, FCM server credentials, or other secrets in .env**. A Supabase publishable key and project URL are public client configuration; row-level policies are what protect data. After changing `.env`, fully restart the app (not just hot reload).
 
 ## Developer controls
 
