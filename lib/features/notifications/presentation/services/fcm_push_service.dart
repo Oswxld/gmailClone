@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../domain/repositories/push_token_repository.dart';
@@ -74,17 +76,17 @@ class FcmPushService {
   Future<void> _saveRegistration(String fid) async {
     try {
       await tokens.registerToken(fid);
-    } catch (_) {
-      // Recover by registering again next time; no sensitive identifiers
-      // are printed to logs.
+      debugPrint('Mail Demo: FCM installation saved to Supabase.');
+    } catch (error) {
+      debugPrint('Mail Demo: could not save FCM installation: $error');
     }
   }
 
   Future<void> _removeRegistration(String fid) async {
     try {
       await tokens.unregisterToken(fid);
-    } catch (_) {
-      // Cleanup can be retried on the next authenticated session.
+    } catch (error) {
+      debugPrint('Mail Demo: could not remove FCM installation: $error');
     }
   }
 
