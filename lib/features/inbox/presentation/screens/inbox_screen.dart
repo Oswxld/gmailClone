@@ -3,11 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../notifications/data/repositories/supabase_push_token_repository.dart';
-import '../../../notifications/presentation/services/fcm_push_service.dart';
 import '../../domain/models/mail_message.dart';
 import '../providers/inbox_providers.dart';
 import 'email_details_screen.dart';
@@ -30,85 +27,12 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   Timer? _holdTimer;
   Timer? _bannerTimer;
   OverlayEntry? _banner;
-  FcmPushService? _push;
-
-  @override
-  void initState() {
-    super.initState();
-    if (!widget.isDemo) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_startPush());
-      });
-    }
-  }
-
-  Future<void> _startPush() async {
-    final client = Supabase.instance.client;
-    if (client.auth.currentUser == null) return;
-    final push = FcmPushService(
-      tokens: SupabasePushTokenRepository(client),
-      onMessageOpened: (id) => unawaited(_openPushedMessage(id)),
-      onForegroundMessage: (id) {
-        if (!mounted) return;
-        ref.invalidate(inboxProvider(false));
-        unawaited(_showPushedMessage(id));
-      },
-    );
-    _push = push;
-    try {
-      await push.start();
-    } catch (error) {
-      debugPrint('Mail Demo push registration failed: $error');
-    }
-  }
-
-  Future<MailMessage?> _findPushedMessage(String id) async {
-    final messages = await ref.read(mailRepositoryProvider(false)).getInbox();
-    for (final message in messages) {
-      if (message.id == id) return message;
-    }
-    return null;
-  }
-
-  Future<void> _openPushedMessage(String id) async {
-    if (!mounted) return;
-    try {
-      final message = await _findPushedMessage(id);
-      if (!mounted) return;
-      ref.invalidate(inboxProvider(false));
-      if (message != null) _openEmail(message);
-    } catch (error) {
-      debugPrint('Could not open pushed demo email: $error');
-    }
-  }
-
-  Future<void> _showPushedMessage(String id) async {
-    try {
-      final message = await _findPushedMessage(id);
-      if (mounted && message != null) _showDemoNotification(message);
-    } catch (error) {
-      debugPrint('Could not display foreground demo email: $error');
-    }
-  }
-
-  Future<void> _signOut() async {
-    if (!widget.isDemo) {
-      try {
-        await _push?.stop();
-      } catch (error) {
-        debugPrint('FCM cleanup failed during sign out: $error');
-      }
-    }
-    if (mounted) widget.onSignOut();
-  }
 
   @override
   void dispose() {
     _holdTimer?.cancel();
     _bannerTimer?.cancel();
     _removeBanner();
-    final push = _push;
-    if (push != null) unawaited(push.stop(unregister: false));
     super.dispose();
   }
 
@@ -288,7 +212,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             TextButton.icon(
               onPressed: () {
                 Navigator.of(sheetContext).pop();
-                unawaited(_signOut());
+                widget.onSignOut();
               },
               icon: const Icon(Icons.logout),
               label: Text(widget.isDemo ? 'Leave demo' : 'Sign out'),
