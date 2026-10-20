@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,9 +10,6 @@ import 'features/inbox/presentation/screens/inbox_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
-  // Android reads its Firebase app configuration from google-services.json.
-  // The FlutterFire-generated FirebaseOptions may also be passed here.
-  await Firebase.initializeApp();
   if (AppConfig.hasSupabase) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
