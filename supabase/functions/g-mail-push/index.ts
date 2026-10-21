@@ -104,6 +104,26 @@ Deno.serve(async (request: Request) => {
   if (notificationError) {
     return response({ error: 'Notification lookup failed' }, 500);
   }
+  /////////
+  /////////
+  ////////
+  //////////
+  ////////////
+  ////////////
+  ///////////////
+  /////////////
+  //////////////
+  /////////////
+  ///////////
+  /////////////
+  ///////////
+  //////////////
+  /////////////
+  ///////////////
+
+
+  ////////////////
+  ///////////////
   if (!notification || !notification.title.startsWith('Demo:')) {
     return response({ error: 'Notification not found or not demo-branded' }, 404);
   }
@@ -142,6 +162,30 @@ Deno.serve(async (request: Request) => {
 
   // Fixed source branding. This function never claims to be Gmail, Google,
   // or a financial service, regardless of any user-provided message fields.
+
+  /////////
+  ////////////
+  ///////////
+  ///////////
+  ///////////
+  ///////////
+  ///////////
+  //////////
+  /////////
+  ///////////
+  ///////////
+  //////////
+  //////////
+  //////////
+  //////////
+  /////////
+  ///////////
+  //////////
+  //////////
+  ///////////
+  //////////////
+  //////////
+  //////
   for (const row of registrations) {
     try {
       const message = {

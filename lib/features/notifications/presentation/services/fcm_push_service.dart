@@ -55,10 +55,12 @@ class FcmPushService {
       final id = _validMessageId(remote);
       if (id != null) onMessageOpened(id);
     });
+
     _foreground = FirebaseMessaging.onMessage.listen((remote) {
       final id = _validMessageId(remote);
       if (id != null) onForegroundMessage(id);
     });
+    
     _started = true;
     await _messaging.register();
 

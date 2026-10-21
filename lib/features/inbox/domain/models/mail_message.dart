@@ -1,5 +1,6 @@
 class MailMessage {
   const MailMessage({
+     this.code,
     required this.id,
     required this.senderName,
     required this.senderAddress,
@@ -13,9 +14,10 @@ class MailMessage {
     this.kind = 'plain',
     this.isRead = false,
     this.isStarred = false,
+
     this.demoKey,
   });
-
+final String? code;
   final String id;
   final String senderName;
   final String senderAddress;
@@ -47,6 +49,7 @@ class MailMessage {
       isRead: row['is_read'] as bool? ?? false,
       isStarred: row['is_starred'] as bool? ?? false,
       demoKey: row['demo_key'] as String?,
+      code: row['code'] as String?,
     );
   }
 
@@ -66,6 +69,7 @@ class MailMessage {
       isRead: isRead ?? this.isRead,
       isStarred: isStarred ?? this.isStarred,
       demoKey: demoKey,
+      code: code,
     );
   }
 
@@ -83,5 +87,6 @@ class MailMessage {
     'category': category,
     'kind': kind,
     'is_read': isRead,
+    'code': code,
   };
 }

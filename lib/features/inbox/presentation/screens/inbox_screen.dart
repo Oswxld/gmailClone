@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../notifications/data/repositories/supabase_push_token_repository.dart';
+import '../../../notifications/presentation/services/fcm_push_service.dart';
 import '../../domain/models/mail_message.dart';
 import '../providers/inbox_providers.dart';
 import 'email_details_screen.dart';
+
 
 class InboxScreen extends ConsumerStatefulWidget {
   const InboxScreen({
@@ -18,6 +22,7 @@ class InboxScreen extends ConsumerStatefulWidget {
 
   final bool isDemo;
   final VoidCallback onSignOut;
+  
 
   @override
   ConsumerState<InboxScreen> createState() => _InboxScreenState();
@@ -27,12 +32,30 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   Timer? _holdTimer;
   Timer? _bannerTimer;
   OverlayEntry? _banner;
+  FcmPushService? _pushService;
+  bool _isSigningOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.isDemo) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_initializePushNotifications());
+      });
+    }
+  }
 
   @override
   void dispose() {
     _holdTimer?.cancel();
     _bannerTimer?.cancel();
     _removeBanner();
+    // Detach the listeners when leaving the inbox; explicit sign-out
+    // separately removes the installation from Supabase.
+    final pushService = _pushService;
+    if (pushService != null && !_isSigningOut) {
+      unawaited(pushService.stop(unregister: false));
+    }
     super.dispose();
   }
 
@@ -41,6 +64,149 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     _banner?.dispose();
     _banner = null;
   }
+
+  Future<void> _signOut() async {
+    if (_isSigningOut) return;
+    _isSigningOut = true;
+    if (!widget.isDemo) {
+      try {
+        await _pushService?.stop();
+      } catch (error) {
+        debugPrint('FCM cleanup failed: $error');
+      }
+    }
+    if (mounted) widget.onSignOut();
+  }
+
+  Future<void> _initializePushNotifications() async {
+    if (widget.isDemo || _isSigningOut) return;
+    final client = Supabase.instance.client;
+    if (client.auth.currentUser == null) return;
+
+    final pushService = FcmPushService(
+      tokens: SupabasePushTokenRepository(client),
+
+
+      onMessageOpened: (messageId) {
+  debugPrint('Notification opened: $messageId');
+
+  unawaited(
+    _openEmailFromNotification(messageId),
+  );
+},
+     onForegroundMessage: (messageId) {
+  unawaited(
+    _handleForegroundNotification(messageId),
+  );
+},
+    );
+    _pushService = pushService;
+
+    try {
+      final registered = await pushService.start();
+      debugPrint('FCM registration started: $registered');
+      // If the screen was left while registration was pending,
+      // clean up the listeners rather than leaving them attached.
+      if (!mounted && !_isSigningOut) {
+        await pushService.stop(unregister: false);
+      }
+    } catch (error) {
+      debugPrint('FCM registration failed: $error');
+    }
+  }
+Future<void> _openEmailFromNotification(
+  String messageId,
+) async {
+  if (!mounted || widget.isDemo || _isSigningOut) {
+    return;
+  }
+
+  debugPrint(
+    'Opening email from notification: $messageId',
+  );
+
+  try {
+    // Retrieve the message from Supabase.
+    final message = await _getMessageById(messageId);
+
+    // Authentication or the screen may have changed.
+    if (!mounted || _isSigningOut) return;
+
+    if (message == null) {
+      debugPrint(
+        'Notification email not found: $messageId',
+      );
+      return;
+    }
+
+    // Refresh the inbox.
+    ref.invalidate(inboxProvider(false));
+
+    // Wait until Flutter completes its current frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isSigningOut) return;
+
+      _openEmail(message);
+    });
+
+  } catch (error) {
+    debugPrint(
+      'Failed to open notification email: $error',
+    );
+  }
+}
+Future<MailMessage?> _getMessageById(String messageId) async {
+  final repository = ref.read(
+    mailRepositoryProvider(false),
+  );
+
+  final messages = await repository.getInbox();
+
+  for (final message in messages) {
+    if (message.id == messageId) {
+      return message;
+    }
+  }
+
+  return null;
+}
+
+
+Future<void> _handleForegroundNotification(
+  String messageId,
+) async {
+  if (!mounted || widget.isDemo || _isSigningOut) {
+    return;
+  }
+
+  debugPrint('FCM foreground message: $messageId');
+
+  // Refresh the inbox so the latest email appears.
+  ref.invalidate(inboxProvider(false));
+
+  try {
+    // Retrieve the actual message.
+    final message = await _getMessageById(messageId);
+
+    // The screen might have been disposed while awaiting.
+    if (!mounted || _isSigningOut) return;
+
+    if (message == null) {
+      debugPrint(
+        'Foreground notification email not found: $messageId',
+      );
+      return;
+    }
+
+    // Display our existing clickable notification banner.
+    _showDemoNotification(message);
+
+  } catch (error) {
+    debugPrint(
+      'Failed to handle foreground notification: $error',
+    );
+  }
+}
 
   void _openEmail(MailMessage message) {
     _removeBanner();
@@ -164,7 +330,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             const Text('Developer controls',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22)),
             const SizedBox(height: 5),
-            const Text('Mail Demo settings — not an email account switcher.',
+            const Text('GMail settings .',
               style: TextStyle(color: AppPalette.muted)),
             const SizedBox(height: 20),
             TextField(
@@ -212,10 +378,10 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             TextButton.icon(
               onPressed: () {
                 Navigator.of(sheetContext).pop();
-                widget.onSignOut();
+                unawaited(_signOut());
               },
               icon: const Icon(Icons.logout),
-              label: Text(widget.isDemo ? 'Leave demo' : 'Sign out'),
+              label: Text(widget.isDemo ? 'Sign Out' : 'Sign out'),
             ),
           ],
         ),
@@ -323,7 +489,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                       style: TextStyle(fontSize: 14,
                           fontWeight: FontWeight.w600)),
                     const Spacer(),
-                    Text(widget.isDemo ? 'DEMO' : 'DEMO MAIL',
+                    Text(widget.isDemo ? 'DEMO' : '',
                       style: const TextStyle(
                         color: AppPalette.outline,
                         fontSize: 10, letterSpacing: 1.1,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "96410829589",
+    "project_id": "mail-demo-push",
+    "storage_bucket": "mail-demo-push.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96410829589:android:7ba57f9d012ad22d97df1c",
+        "android_client_info": {
+          "package_name": "com.example.gmail_clone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBliY3RNKys6feWcNHq0S-PN4uZeh40BUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
