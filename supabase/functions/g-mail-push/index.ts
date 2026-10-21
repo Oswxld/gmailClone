@@ -124,8 +124,24 @@ Deno.serve(async (request: Request) => {
 
   ////////////////
   ///////////////
-  if (!notification || !notification.title.startsWith('Demo:')) {
-    return response({ error: 'Notification not found or not demo-branded' }, 404);
+  if (!notification || !notification.message_id) {
+    return response({ error: 'Notification has no linked email' }, 404);
+  }
+
+  // Source email must exist and belong to the notification recipient.
+  // Use actual message fields rather than an old fixed test title.
+  const { data: mail, error: mailError } = await db
+    .from('g_messages')
+    .select('id,sender_name,subject,preview,body')
+    .eq('id', notification.message_id)
+    .eq('owner_id', notification.owner_id)
+    .maybeSingle();
+
+  if (mailError) {
+    return response({ error: 'Email lookup failed' }, 500);
+  }
+  if (!mail) {
+    return response({ error: 'Linked email not found' }, 404);
   }
 
   const { data: registrations, error: tokenError } = await db
@@ -188,15 +204,17 @@ Deno.serve(async (request: Request) => {
   //////
   for (const row of registrations) {
     try {
+      // Android app renders the single custom system notification. Sending a
+      // notification payload here as well would produce duplicates.
       const message = {
         token: row.fcm_target,
-        notification: {
-          title: 'Mail Demo • Test notification',
-          body: String(notification.body).slice(0, 130),
-        },
         data: {
           type: 'demo_mail',
-          message_id: notification.message_id ?? '',
+          message_id: String(notification.message_id),
+          sender: String(mail.sender_name ?? 'Gmail Clone').slice(0, 80),
+          subject: String(mail.subject ?? '').slice(0, 130),
+          preview: String(mail.preview || mail.body || notification.body || '')
+            .slice(0, 180),
         },
         android: {
           priority: 'high',

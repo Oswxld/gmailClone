@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -6,6 +8,8 @@ import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/inbox/presentation/screens/inbox_screen.dart';
+import 'features/notifications/presentation/services/mail_background_handler.dart';
+import 'features/notifications/presentation/services/mail_local_notification_service.dart';
 
 
 //firebase imports
@@ -20,6 +24,11 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    FirebaseMessaging.onBackgroundMessage(mailBackgroundHandler);
+    await MailLocalNotificationService.initialize();
+  }
 
   if (AppConfig.hasSupabase) {
     await Supabase.initialize(

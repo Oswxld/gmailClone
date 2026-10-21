@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../notifications/data/repositories/supabase_push_token_repository.dart';
 import '../../../notifications/presentation/services/fcm_push_service.dart';
+import '../../../notifications/presentation/services/mail_local_notification_service.dart';
 import '../../domain/models/mail_message.dart';
 import '../providers/inbox_providers.dart';
 import 'email_details_screen.dart';
@@ -39,14 +40,33 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   void initState() {
     super.initState();
     if (!widget.isDemo) {
+      MailLocalNotificationService.pendingMessageId.addListener(
+        _handleLocalNotificationTap,
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_initializePushNotifications());
+        if (!mounted) return;
+        _handleLocalNotificationTap();
+        unawaited(_initializePushNotifications());
       });
     }
   }
 
+  void _handleLocalNotificationTap() {
+    if (!mounted || widget.isDemo || _isSigningOut) return;
+    final messageId = MailLocalNotificationService.pendingMessageId.value;
+    if (messageId == null) return;
+    // Consume the stored tap only once. Existing navigation handles the rest.
+    MailLocalNotificationService.pendingMessageId.value = null;
+    unawaited(_openEmailFromNotification(messageId));
+  }
+
   @override
   void dispose() {
+    if (!widget.isDemo) {
+      MailLocalNotificationService.pendingMessageId.removeListener(
+        _handleLocalNotificationTap,
+      );
+    }
     _holdTimer?.cancel();
     _bannerTimer?.cancel();
     _removeBanner();
