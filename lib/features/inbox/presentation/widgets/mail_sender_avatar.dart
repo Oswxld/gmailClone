@@ -73,7 +73,7 @@ class MailSenderAvatar extends StatelessWidget {
             width: radius * 2 - inset * 2,
             height: radius * 2 - inset * 2,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _fallbackAvatar(),
+            errorBuilder: (context, error, stackTrace) => _fallbackAvatar(),
           ),
         ),
       ),

@@ -696,12 +696,6 @@ Future<void> _handleForegroundNotification(
     );
   }
 
-  Color _color(String hex) {
-    final cleaned = hex.replaceFirst('#', '');
-    final n = int.tryParse(cleaned, radix: 16);
-    return n == null ? AppPalette.blue : Color(0xFF000000 | n);
-  }
-
   String _time(DateTime when) {
     final now = DateTime.now();
     if (now.year == when.year &&

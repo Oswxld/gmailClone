@@ -40,7 +40,7 @@ class SupabaseMailRepository implements MailRepository {
     // Determine which fixtures already exist for this user.
     final allKeys = <String>[
       ...legacySeedKeys.keys,
-      ...templates.map((message) => message.demoKey!).toList(),
+      ...templates.map((message) => message.demoKey!),
     ];
     final existingRows = await client
         .from('g_messages')
