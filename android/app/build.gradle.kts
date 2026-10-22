@@ -27,6 +27,12 @@ android {
 
     buildTypes {
         release {
+            // Preserve JNI-reflected Kotlin symbols used by shared_preferences_android
+            // in minified release APKs (see android/app/proguard-rules.pro).
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             // Existing development signing configuration. Replace for distribution.
             signingConfig = signingConfigs.getByName("debug")
         }
