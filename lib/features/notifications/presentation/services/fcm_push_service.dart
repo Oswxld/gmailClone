@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../domain/repositories/push_token_repository.dart';
@@ -31,11 +33,13 @@ class FcmPushService {
 
   Future<bool> start() async {
     if (_started) return true;
+    debugPrint('&&&&&&&&&& FCM: STARTING PUSH LISTENERS &&&&&&&&&&');
     final permission = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
+    debugPrint('&&&&&&&&&& FCM PERMISSION: ${permission.authorizationStatus} &&&&&&&&&&');
     if (permission.authorizationStatus != AuthorizationStatus.authorized &&
         permission.authorizationStatus != AuthorizationStatus.provisional) {
       return false;
@@ -44,29 +48,48 @@ class FcmPushService {
     // FCM 17 uses Firebase Installation IDs (FIDs) for send targeting.
     // Listen *before* register() so the first registration is not missed.
     _registered = _messaging.onRegistered.listen((installationId) {
+      debugPrint('&&&&&&&&&& FCM REGISTRATION EVENT RECEIVED &&&&&&&&&&');
       _installationId = installationId;
       unawaited(_saveRegistration(installationId));
     });
     _unregistered = _messaging.onUnregistered.listen((installationId) {
+      debugPrint('&&&&&&&&&& FCM UNREGISTERED EVENT RECEIVED &&&&&&&&&&');
       unawaited(_removeRegistration(installationId));
     });
 
     _opened = FirebaseMessaging.onMessageOpenedApp.listen((remote) {
+      debugPrint('&&&&&&&&&& FCM MESSAGE OPENED FROM NOTIFICATION &&&&&&&&&&');
       final id = _validMessageId(remote);
       if (id != null) onMessageOpened(id);
+    }, onError: (Object error) {
+      debugPrint('&&&&&&&&&& FCM OPENED LISTENER ERROR: $error &&&&&&&&&&');
     });
 
     _foreground = FirebaseMessaging.onMessage.listen((remote) {
+      debugPrint('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');
+      debugPrint('&&&&&&&&&& MESSAGE RECEIVED - FOREGROUND &&&&&&&&&&');
+      debugPrint('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');
+      debugPrint('FCM payload type: ${remote.data['type'] ?? 'missing'}');
       final id = _validMessageId(remote);
-      if (id != null) onForegroundMessage(id);
+      if (id != null) {
+        debugPrint('&&&&&&&&&& MESSAGE VALID - FORWARDING TO INBOX &&&&&&&&&&');
+        onForegroundMessage(id);
+      } else {
+        debugPrint('&&&&&&&&&& MESSAGE RECEIVED BUT INVALID PAYLOAD &&&&&&&&&&');
+      }
+    }, onError: (Object error) {
+      debugPrint('&&&&&&&&&& FCM FOREGROUND LISTENER ERROR: $error &&&&&&&&&&');
     });
     
     _started = true;
+    debugPrint('&&&&&&&&&& FCM LISTENERS ATTACHED; REGISTERING &&&&&&&&&&');
     await _messaging.register();
+    debugPrint('&&&&&&&&&& FCM REGISTER CALL COMPLETED &&&&&&&&&&');
 
     // Covers a notification that opened a terminated Android application.
     final initial = await _messaging.getInitialMessage();
     if (initial != null) {
+      debugPrint('&&&&&&&&&& MESSAGE RECEIVED - APP LAUNCH &&&&&&&&&&');
       final id = _validMessageId(initial);
       if (id != null) onMessageOpened(id);
     }
@@ -76,9 +99,9 @@ class FcmPushService {
   Future<void> _saveRegistration(String fid) async {
     try {
       await tokens.registerToken(fid);
-    } catch (_) {
-      // Recover by registering again next time; no sensitive identifiers
-      // are printed to logs.
+      debugPrint('&&&&&&&&&& FCM REGISTRATION SAVED TO SUPABASE &&&&&&&&&&');
+    } catch (error) {
+      debugPrint('&&&&&&&&&& FCM REGISTRATION SAVE FAILED: $error &&&&&&&&&&');
     }
   }
 
