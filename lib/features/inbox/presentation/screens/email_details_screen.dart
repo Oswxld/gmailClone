@@ -203,8 +203,13 @@ class EmailDetailsScreen extends StatelessWidget {
 
   Widget _demoCodeCard() {
     final code = message.code?.trim();
-
     final hasCode = code != null && code.isNotEmpty;
+
+    // Style the sender label for Deriv-themed demonstration messages only.
+    // Keep the code and disclaimer explicitly fictional and non-functional.
+    final sender = message.senderName.trim().toLowerCase();
+    final isDerivDemo =
+        sender == 'deriv' || sender == 'trading demo' || sender == 'deriv demo';
 
     return Container(
       width: double.infinity,
@@ -216,14 +221,16 @@ class EmailDetailsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Actual sender from Supabase
           Text(
-            message.senderName,
+            isDerivDemo ? 'deriv' : message.senderName,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.w900,
-              color: AppPalette.text,
+              fontStyle: isDerivDemo ? FontStyle.italic : FontStyle.normal,
+              color: isDerivDemo
+                  ? const Color(0xFFFF444F)
+                  : AppPalette.text,
             ),
           ),
 

@@ -16,8 +16,6 @@ class MailSenderAvatar extends StatelessWidget {
 
   static const _iconDirectory = 'assets/icons/messages_icons/';
   static const _images = <String, String>{
-    'seed2-miriam': 'profile_mask2.png',
-    'seed2-brian': 'profile_mask2.png',
     'seed2-facebook': 'facebook.png',
     'seed2-chatgpt': 'chatgpt.png',
     'seed2-linkedin': 'linkedin.png',
@@ -30,6 +28,13 @@ class MailSenderAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fictional personal emails use a simple, consistent Gmail-style initial
+    // instead of a shared placeholder/profile picture.
+    if (message.demoKey == 'seed2-miriam' ||
+        message.demoKey == 'seed2-brian') {
+      return _personalInitialAvatar();
+    }
+
     if (message.kind == 'demo_code') {
       // Identical image to android/.../drawable-nodpi/sender_avatar.png.
       return _imageAvatar('sender_avatar.png', inset: 0);
@@ -54,11 +59,30 @@ class MailSenderAvatar extends StatelessWidget {
 
     final name = _images[message.demoKey];
     if (name != null) {
-      final isProfile = name == 'profile_mask2.png';
-      return _imageAvatar(name, inset: isProfile ? 5 : 3);
+      return _imageAvatar(name, inset: 3);
     }
 
     return _fallbackAvatar();
+  }
+
+  Widget _personalInitialAvatar() {
+    final email = message.senderAddress.trim();
+    final initial = email.isNotEmpty
+        ? email.substring(0, 1).toUpperCase()
+        : message.avatarLetter.toUpperCase();
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: const Color(0xFF6B7F9D),
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: radius * 0.95,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
   }
 
   Widget _imageAvatar(String filename, {required double inset}) {
