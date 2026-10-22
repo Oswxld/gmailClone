@@ -27,7 +27,9 @@ class DemoMailRepository implements MailRepository {
   Future<String> getAvatarLetter() async => _letter;
 
   @override
-  Future<void> setAvatarLetter(String letter) async => _letter = letter;
+  Future<void> setAvatarLetter(String letter) async {
+    _letter = letter;
+  }
 
   @override
   Future<MailMessage> generateTestMessage() async {
