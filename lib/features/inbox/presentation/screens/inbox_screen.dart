@@ -12,6 +12,7 @@ import '../../../notifications/presentation/services/mail_local_notification_ser
 import '../../domain/models/mail_message.dart';
 import '../providers/inbox_providers.dart';
 import 'email_details_screen.dart';
+import '../widgets/mail_sender_avatar.dart';
 
 
 class InboxScreen extends ConsumerStatefulWidget {
@@ -521,7 +522,7 @@ Future<void> _handleForegroundNotification(
                 icon: Icons.label_rounded,
                 color: const Color(0xFF1E8E3E),
                 title: 'Promotions',
-                preview: 'Design Weekly — Weekly highlights...',
+                preview: 'Netflix — Your latest picks...',
                 count: '10 new',
                 badge: const Color(0xFFC4EED0),
               ),
@@ -529,17 +530,17 @@ Future<void> _handleForegroundNotification(
                 icon: Icons.group_rounded,
                 color: const Color(0xFF1A73E8),
                 title: 'Social',
-                preview: 'Community — Recent activity...',
+                preview: 'Facebook — Recent activity...',
                 count: '5 new',
                 badge: const Color(0xFFD3E3FD),
               ),
               for (final message in messages) ...[
-                if (message.demoKey == 'project')
+                if (message.demoKey == 'seed2-vercel')
                   _categoryCard(
                     icon: Icons.info,
                     color: const Color(0xFFE8710A),
                     title: 'Updates',
-                    preview: 'Product Notes — Latest news...',
+                    preview: 'Vercel — Deployment updates...',
                     count: '16 new',
                     badge: const Color(0xFFFEEBD9),
                   ),
@@ -640,13 +641,7 @@ Future<void> _handleForegroundNotification(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: _color(message.avatarColor),
-              child: Text(message.avatarLetter,
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w600)),
-            ),
+            MailSenderAvatar(message: message),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

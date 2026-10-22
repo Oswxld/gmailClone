@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/mail_message.dart';
+import '../widgets/mail_sender_avatar.dart';
 
 class EmailDetailsScreen extends StatelessWidget {
   const EmailDetailsScreen({required this.message, super.key});
@@ -88,17 +89,7 @@ class EmailDetailsScreen extends StatelessWidget {
           const SizedBox(height: 23),
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: _color(message.avatarColor),
-                child: Text(
-                  message.avatarLetter,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              MailSenderAvatar(message: message),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -346,11 +337,6 @@ class EmailDetailsScreen extends StatelessWidget {
       label: Text(label, style: const TextStyle(fontSize: 14)),
     ),
   );
-
-  Color _color(String hex) {
-    final value = int.tryParse(hex.replaceFirst('#', ''), radix: 16);
-    return value == null ? AppPalette.blue : Color(0xFF000000 | value);
-  }
 
   String _formatTime(DateTime time) =>
       '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';

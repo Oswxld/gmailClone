@@ -19,9 +19,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Primary'), findsOneWidget);
 
-    await tester.tap(find.text('Your portrait studio is ready'));
+    await tester.tap(find.text('Are we still on for Saturday?'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Your studio project is ready'),
+    expect(find.textContaining('Are we still on for Saturday afternoon?'),
         findsOneWidget);
 
     await tester.tap(find.byTooltip('Back to inbox'));

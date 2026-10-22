@@ -15,15 +15,87 @@ class SupabaseMailRepository implements MailRepository {
     return id;
   }
 
+  // Previous versions seeded these 13 generic examples under these keys.
+  // Pair by index with buildExampleMessages() to replace *only* known legacy
+  // fixtures while preserving their id, is_read, and is_starred state.
+  static const legacySeedKeys = <String, String>{
+    'studio': 'Studio Updates',
+    'project': 'Project Updates',
+    'trading-news': 'Trading Demo',
+    'workspace': 'Workspace Team',
+    'account': 'Account Demo',
+    'design': 'Design Weekly',
+    'community': 'Community',
+    'storage': 'Cloud Drive',
+    'calendar': 'Calendar',
+    'newsletter': 'Product Notes',
+    'learning': 'Course Team',
+    'delivery': 'Delivery Demo',
+    'welcome': 'Mail Demo',
+  };
+
   Future<void> _seed() async {
-    final rows = buildExampleMessages()
+    final templates = buildExampleMessages();
+
+    // Determine which fixtures already exist for this user.
+    final allKeys = <String>[
+      ...legacySeedKeys.keys,
+      ...templates.map((message) => message.demoKey!).toList(),
+    ];
+    final existingRows = await client
+        .from('g_messages')
+        .select('demo_key,sender_name')
+        .eq('owner_id', _userId)
+        .inFilter('demo_key', allKeys);
+
+    final knownByKey = <String, String>{};
+    for (final row in existingRows) {
+      final key = row['demo_key'] as String?;
+      final sender = row['sender_name'] as String?;
+      if (key != null && sender != null) knownByKey[key] = sender;
+    }
+
+    // One-time, per-user migration of the earlier example messages. No
+    // deletion of other mail and no modification of real/unseeded messages.
+    // These are UPDATEs rather than INSERTs, so our INSERT-only notification
+    // webhook is not triggered for the 13 already-existing examples.
+    final oldKeys = legacySeedKeys.keys.toList();
+    for (var i = 0; i < templates.length; i++) {
+      final template = templates[i];
+      final newKey = template.demoKey!;
+      if (knownByKey.containsKey(newKey)) continue;
+
+      final oldKey = oldKeys[i];
+      final oldSender = legacySeedKeys[oldKey]!;
+      if (knownByKey[oldKey] != oldSender) continue;
+
+      final changes = template.toSeedRow(_userId)
+        ..remove('owner_id')
+        ..remove('is_read');
+
+      await client
+          .from('g_messages')
+          .update(changes)
+          .eq('owner_id', _userId)
+          .eq('demo_key', oldKey)
+          .eq('sender_name', oldSender);
+
+      knownByKey.remove(oldKey);
+      knownByKey[newKey] = template.senderName;
+    }
+
+    final missing = templates
+        .where((message) => !knownByKey.containsKey(message.demoKey))
         .map((message) => message.toSeedRow(_userId))
         .toList();
-    await client.from('g_messages').upsert(
-      rows,
-      onConflict: 'owner_id,demo_key',
-      ignoreDuplicates: true,
-    );
+
+    if (missing.isNotEmpty) {
+      await client.from('g_messages').upsert(
+        missing,
+        onConflict: 'owner_id,demo_key',
+        ignoreDuplicates: true,
+      );
+    }
   }
 
   @override
