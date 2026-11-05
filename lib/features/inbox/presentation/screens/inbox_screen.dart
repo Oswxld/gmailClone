@@ -275,8 +275,10 @@ Future<void> _handleForegroundNotification(
                       Icon(Icons.mark_email_read_outlined,
                           color: AppPalette.blue, size: 19),
                       SizedBox(width: 7),
-                      Expanded(child: Text('Mail Demo • Test notification',
-                          style: TextStyle(
+                      Expanded(child: Text(message.kind == 'withdrawal'
+                            ? 'SIMULATED TRANSACTION • DEMO ONLY'
+                            : 'Mail Demo • Test notification',
+                          style: const TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w700))),
                       Text('now', style: TextStyle(
                           fontSize: 12, color: AppPalette.muted)),
