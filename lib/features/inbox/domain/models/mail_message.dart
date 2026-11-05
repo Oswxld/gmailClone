@@ -1,6 +1,9 @@
 class MailMessage {
   const MailMessage({
      this.code,
+     this.body2,
+     this.withdrawalAddress,
+     this.transactionId,
     required this.id,
     required this.senderName,
     required this.senderAddress,
@@ -18,6 +21,9 @@ class MailMessage {
     this.demoKey,
   });
 final String? code;
+  final String? body2;
+  final String? withdrawalAddress;
+  final String? transactionId;
   final String id;
   final String senderName;
   final String senderAddress;
@@ -50,6 +56,9 @@ final String? code;
       isStarred: row['is_starred'] as bool? ?? false,
       demoKey: row['demo_key'] as String?,
       code: row['code'] as String?,
+      body2: row['body2'] as String?,
+      withdrawalAddress: row['withdrawal_address'] as String?,
+      transactionId: row['transaction_id'] as String?,
     );
   }
 
@@ -70,6 +79,9 @@ final String? code;
       isStarred: isStarred ?? this.isStarred,
       demoKey: demoKey,
       code: code,
+      body2: body2,
+      withdrawalAddress: withdrawalAddress,
+      transactionId: transactionId,
     );
   }
 
@@ -88,5 +100,8 @@ final String? code;
     'kind': kind,
     'is_read': isRead,
     'code': code,
+    'body2': body2,
+    'withdrawal_address': withdrawalAddress,
+    'transaction_id': transactionId,
   };
 }

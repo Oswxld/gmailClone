@@ -158,7 +158,9 @@ class EmailDetailsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 26),
-          if (message.kind == 'demo_code')
+          if (message.kind == 'withdrawal')
+            _withdrawalDemoCard()
+          else if (message.kind == 'demo_code')
             _demoCodeCard()
           else if (message.kind == 'demo_alert')
             _alertCard()
@@ -185,6 +187,119 @@ class EmailDetailsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+
+  /// Clearly fictional transaction showcase; never presented as proof of payment.
+  /// The banner and avatar images are optional until the designer adds assets.
+  Widget _withdrawalDemoCard() {
+    final heading = message.body2?.trim().isNotEmpty == true
+        ? message.body2!.trim()
+        : message.subject;
+    final address = message.withdrawalAddress?.trim();
+    final reference = message.transactionId?.trim();
+    const ink = Color(0xFF181818);
+    const yellow = Color(0xFFFCD535);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF3B3010),
+            border: Border.all(color: yellow),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Text(
+            'SIMULATED TRANSACTION • DEMO ONLY\n'
+            'Not a real withdrawal or payment confirmation.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: yellow,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Center(
+          child: Image.asset(
+            'assets/icons/messages_icons/download.png',
+            height: 42,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Text(
+              'TRANSACTION DEMO',
+              style: TextStyle(
+                color: yellow, fontWeight: FontWeight.w800, fontSize: 18,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(heading, style: const TextStyle(
+                color: ink, fontSize: 19, fontWeight: FontWeight.w800,
+              )),
+              const SizedBox(height: 18),
+              Text(message.body, style: const TextStyle(
+                color: ink, fontSize: 14, height: 1.55,
+              )),
+              const SizedBox(height: 20),
+              const Text('Withdrawal Address:', style: TextStyle(
+                color: ink, fontSize: 13, fontWeight: FontWeight.w700,
+              )),
+              const SizedBox(height: 5),
+              SelectableText(address?.isNotEmpty == true ? address! : 'Not provided',
+                style: const TextStyle(color: ink, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 18),
+              const Text('Transaction ID:', style: TextStyle(
+                color: ink, fontSize: 13, fontWeight: FontWeight.w700,
+              )),
+              const SizedBox(height: 5),
+              SelectableText(reference?.isNotEmpty == true ? reference! : 'Not provided',
+                style: const TextStyle(color: ink, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 22),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                decoration: BoxDecoration(
+                  color: yellow, borderRadius: BorderRadius.circular(5),
+                ),
+                child: const Text('Demo dashboard (display only)',
+                    style: TextStyle(color: ink, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(height: 22),
+              const Text(
+                "Don't recognize this activity? Please reset your password "
+                'and contact customer support immediately.',
+                style: TextStyle(color: ink, fontSize: 13, height: 1.5),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'This demonstration is not recorded on a blockchain. '
+                'No funds were transferred.',
+                style: TextStyle(color: ink, fontSize: 13, height: 1.5),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'This is an automated demonstration message, please do not reply.',
+                style: TextStyle(color: ink, fontSize: 12,
+                    fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

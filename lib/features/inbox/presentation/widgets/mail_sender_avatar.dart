@@ -35,6 +35,10 @@ class MailSenderAvatar extends StatelessWidget {
       return _personalInitialAvatar();
     }
 
+    if (message.kind == 'withdrawal') {
+      return _imageAvatar('withdrawal_avatar.png', inset: 0);
+    }
+
     if (message.kind == 'demo_code') {
       // Identical image to android/.../drawable-nodpi/sender_avatar.png.
       return _imageAvatar('sender_avatar.png', inset: 0);

@@ -60,8 +60,16 @@ class MailLocalNotificationService {
     final subject = _text(remote.data['subject'], '', 130);
     final preview = _text(remote.data['preview'], 'New email', 180);
     final body = subject.isEmpty ? preview : '$subject\n$preview';
+    final visibleBody = remote.data['kind'] == 'withdrawal'
+        ? 'SIMULATED TRANSACTION — DEMO ONLY\n$body'
+        : body;
 
-    const senderImage = DrawableResourceAndroidBitmap('sender_avatar');
+    final isWithdrawal = remote.data['kind'] == 'withdrawal';
+    // The separate drawable is supplied by the developer under drawable-nodpi.
+    // Until the asset exists, use the known-good existing sender avatar.
+    final senderImage = DrawableResourceAndroidBitmap(
+      isWithdrawal ? 'withdrawal_avatar' : 'sender_avatar',
+    );
     final androidDetails = AndroidNotificationDetails(
       'gmail_clone_messages',
       'Email notifications',
@@ -70,14 +78,14 @@ class MailLocalNotificationService {
       priority: Priority.high,
       icon: 'ic_notification',
       largeIcon: senderImage,
-      styleInformation: BigTextStyleInformation(body),
+      styleInformation: BigTextStyleInformation(visibleBody),
       autoCancel: true,
     );
 
     await _plugin.show(
       id: _notificationId(messageId),
       title: sender,
-      body: body,
+      body: visibleBody,
       notificationDetails: NotificationDetails(android: androidDetails),
       payload: messageId,
     );
