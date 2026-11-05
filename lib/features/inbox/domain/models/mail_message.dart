@@ -39,26 +39,42 @@ final String? code;
   final bool isStarred;
   final String? demoKey;
 
+  // Supabase may return null for optional/manual message fields.
+  // Keep widget-facing values non-null so existing inbox screens remain safe.
+  static String _text(dynamic value, [String fallback = '']) =>
+      value is String ? value : fallback;
+
+  static DateTime _date(dynamic value) {
+    if (value is DateTime) return value.toLocal();
+    if (value is String) {
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed.toLocal();
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0).toLocal();
+  }
+
   factory MailMessage.fromRow(Map<String, dynamic> row) {
     return MailMessage(
-      id: row['id'] as String,
-      senderName: row['sender_name'] as String,
-      senderAddress: row['sender_address'] as String,
-      subject: row['subject'] as String,
-      preview: row['preview'] as String? ?? '',
-      body: row['body'] as String? ?? '',
-      receivedAt: DateTime.parse(row['received_at'] as String).toLocal(),
-      avatarLetter: row['avatar_letter'] as String? ?? 'M',
-      avatarColor: row['avatar_color'] as String? ?? '#1A73E8',
-      category: row['category'] as String? ?? 'primary',
-      kind: row['kind'] as String? ?? 'plain',
-      isRead: row['is_read'] as bool? ?? false,
-      isStarred: row['is_starred'] as bool? ?? false,
-      demoKey: row['demo_key'] as String?,
-      code: row['code'] as String?,
-      body2: row['body2'] as String?,
-      withdrawalAddress: row['withdrawal_address'] as String?,
-      transactionId: row['transaction_id'] as String?,
+      id: _text(row['id']),
+      senderName: _text(row['sender_name'], 'Unknown sender'),
+      senderAddress: _text(row['sender_address']),
+      subject: _text(row['subject'], '(No subject)'),
+      preview: _text(row['preview']),
+      body: _text(row['body']),
+      receivedAt: _date(row['received_at']),
+      avatarLetter: _text(row['avatar_letter'], 'M'),
+      avatarColor: _text(row['avatar_color'], '#1A73E8'),
+      category: _text(row['category'], 'primary'),
+      kind: _text(row['kind'], 'plain'),
+      isRead: row['is_read'] == true,
+      isStarred: row['is_starred'] == true,
+      demoKey: row['demo_key'] is String ? row['demo_key'] as String : null,
+      code: row['code'] is String ? row['code'] as String : null,
+      body2: row['body2'] is String ? row['body2'] as String : null,
+      withdrawalAddress: row['withdrawal_address'] is String
+          ? row['withdrawal_address'] as String : null,
+      transactionId: row['transaction_id'] is String
+          ? row['transaction_id'] as String : null,
     );
   }
 
