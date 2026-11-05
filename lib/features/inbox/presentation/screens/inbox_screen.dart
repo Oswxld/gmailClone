@@ -270,9 +270,9 @@ Future<void> _handleForegroundNotification(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.mark_email_read_outlined,
+                      const Icon(Icons.mark_email_read_outlined,
                           color: AppPalette.blue, size: 19),
                       SizedBox(width: 7),
                       Expanded(child: Text(message.kind == 'withdrawal'
