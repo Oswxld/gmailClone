@@ -100,7 +100,9 @@ class MailSenderAvatar extends StatelessWidget {
             '$_iconDirectory$filename',
             width: radius * 2 - inset * 2,
             height: radius * 2 - inset * 2,
-            fit: BoxFit.contain,
+            fit: filename == 'withdrawal_avatar.png'
+                ? BoxFit.cover
+                : BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => _fallbackAvatar(),
           ),
         ),

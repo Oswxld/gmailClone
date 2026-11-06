@@ -1,5 +1,8 @@
+import 'dart:ui' as ui;
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Creates Android system notifications from background FCM data messages.
@@ -65,11 +68,11 @@ class MailLocalNotificationService {
         : body;
 
     final isWithdrawal = remote.data['kind'] == 'withdrawal';
-    // The separate drawable is supplied by the developer under drawable-nodpi.
-    // Until the asset exists, use the known-good existing sender avatar.
-    final senderImage = DrawableResourceAndroidBitmap(
-      isWithdrawal ? 'withdrawal_avatar' : 'sender_avatar',
-    );
+    // Clip withdrawal avatars into a truly circular PNG, with transparent
+    // corners, before giving Android its large notification bitmap.
+    final AndroidBitmap<Object> senderImage = isWithdrawal
+        ? await _circularWithdrawalAvatar()
+        : const DrawableResourceAndroidBitmap('sender_avatar');
     final androidDetails = AndroidNotificationDetails(
       'gmail_clone_messages',
       'Email notifications',
@@ -89,6 +92,48 @@ class MailLocalNotificationService {
       notificationDetails: NotificationDetails(android: androidDetails),
       payload: messageId,
     );
+  }
+
+  static Future<AndroidBitmap<Object>> _circularWithdrawalAvatar() async {
+    try {
+      final data = await rootBundle.load(
+        'assets/icons/messages_icons/withdrawal_avatar.png',
+      );
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final frame = await codec.getNextFrame();
+      final source = frame.image;
+
+      const size = 192;
+      final recorder = ui.PictureRecorder();
+      final canvas = ui.Canvas(recorder);
+      final circle = ui.Path()
+        ..addOval(ui.Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()));
+      canvas.clipPath(circle);
+
+      // Center-crop a rectangular image so the circle fills completely.
+      final side = source.width < source.height ? source.width : source.height;
+      final left = (source.width - side) / 2;
+      final top = (source.height - side) / 2;
+      canvas.drawImageRect(
+        source,
+        ui.Rect.fromLTWH(left, top, side.toDouble(), side.toDouble()),
+        const ui.Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
+        ui.Paint()..filterQuality = ui.FilterQuality.high,
+      );
+
+      final picture = recorder.endRecording();
+      final roundImage = await picture.toImage(size, size);
+      final png = await roundImage.toByteData(format: ui.ImageByteFormat.png);
+      source.dispose();
+      roundImage.dispose();
+      picture.dispose();
+      codec.dispose();
+      if (png == null) throw StateError('Could not encode circular avatar');
+      return ByteArrayAndroidBitmap(png.buffer.asUint8List());
+    } catch (error) {
+      debugPrint('Circular withdrawal avatar failed: $error');
+      return const DrawableResourceAndroidBitmap('sender_avatar');
+    }
   }
 
   static String _text(String? value, String fallback, int limit) {
