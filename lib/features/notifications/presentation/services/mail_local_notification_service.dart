@@ -117,7 +117,7 @@ class MailLocalNotificationService {
       canvas.drawImageRect(
         source,
         ui.Rect.fromLTWH(left, top, side.toDouble(), side.toDouble()),
-        const ui.Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
+        ui.Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
         ui.Paint()..filterQuality = ui.FilterQuality.high,
       );
 
